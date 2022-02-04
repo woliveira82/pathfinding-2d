@@ -6,8 +6,10 @@ var velocity: Vector2 = Vector2.ZERO
 var path: Array = []
 var levelNavigation: Navigation2D = null
 var player = null
+var player_spotted: bool = false
 
 onready var line2d = $Line2D
+onready var los = $LineOfSight
 
 
 func _ready():
@@ -21,10 +23,21 @@ func _ready():
 
 func _physics_process(delta):
 	line2d.global_position = Vector2.ZERO
-	if player and levelNavigation:
-		generate_path()
-		navigate()
+	if player:
+		los.look_at(player.global_position)
+		_check_player_in_detection()
+		if player_spotted:
+			generate_path()
+			navigate()
 	move()
+
+
+func _check_player_in_detection() -> bool:
+	var collider = los.get_collider()
+	if collider and collider.is_in_group('Player'):
+		player_spotted = true
+		return true
+	return false
 
 
 func navigate():
@@ -37,6 +50,7 @@ func navigate():
 
 func generate_path():
 	if levelNavigation != null and player != null:
+		path = levelNavigation.get_simple_path(global_position, player.global_position, false)
 		path = levelNavigation.get_simple_path(global_position, player.global_position, false)
 		line2d.points = path
 
